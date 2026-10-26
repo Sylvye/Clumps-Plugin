@@ -25,6 +25,8 @@ public class XPCollectionListener implements Listener {
 
     @EventHandler
     public void onPlayerNearbyXPCollect(PlayerExpChangeEvent event) {
+        if (!(event.getSource() instanceof ExperienceOrb sourceOrb)) return;
+
         Player player = event.getPlayer();
         World world = player.getWorld();
         Location playerLocation = player.getLocation();
@@ -40,9 +42,14 @@ public class XPCollectionListener implements Listener {
                 .map(entity -> (ExperienceOrb) entity)
                 .collect(Collectors.toList());
 
+        int totalXP = event.getAmount();
         for (ExperienceOrb orb : nearbyOrbs) {
-            player.giveExp(orb.getExperience());  // Give player XP from the orb
-            orb.remove();  // Remove orb after collection
+            // Paper handles the source orb after this event, including its XP award.
+            if (orb.getUniqueId().equals(sourceOrb.getUniqueId()) || !orb.isValid() || orb.isDead()) continue;
+
+            totalXP += orb.getExperience();
+            orb.remove();
         }
+        event.setAmount(totalXP);
     }
 }
